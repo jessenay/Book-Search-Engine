@@ -27,11 +27,36 @@ const SearchBooks = () => {
   // create method to search for books and set state on form submit
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-
+  
     if (!searchInput) {
       return false;
     }
+  
+    try {
+      // Assuming searchGoogleBooks returns a Promise that resolves with the fetched books
+      const response = await searchGoogleBooks(searchInput);
+      if (!response.ok) {
+        throw new Error('something went wrong!');
+      }
+  
+      const { items } = await response.json();
+  
+      const bookData = items.map((book) => ({
+        bookId: book.id,
+        authors: book.volumeInfo.authors || ['No author to display'],
+        title: book.volumeInfo.title,
+        description: book.volumeInfo.description,
+        image: book.volumeInfo.imageLinks?.thumbnail || '',
+      }));
+  
+      setSearchedBooks(bookData);
+    } catch (err) {
+      console.error(err);
+    }
+  
+    setSearchInput('');
   };
+  
 
   // create function to handle saving a book to our database
   const handleSaveBook = async (bookId) => {
