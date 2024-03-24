@@ -1,18 +1,18 @@
-const apolloServerExpress = require('apollo-server-express');
+//const apolloServerExpress = require('apollo-server-express');
 const models = require('../models');
-const authUtils = require('../utils/auth');
+const { signToken, AuthenticationError } = require('../utils/auth');
 
-const { AuthenticationError } = apolloServerExpress;
+//const { AuthenticationError } = apolloServerExpress;
 const { User } = models;
-const { authMiddleware, signToken } = authUtils;
+//const { authMiddleware, signToken } = authUtils;
 
-async function getMe(_, __, context) {
+/*async function getMe(_, __, context) {
   if (!context.user) {
     throw new AuthenticationError('Must login first to view this information.');
   }
 
   return User.findById(context.user._id).populate('savedBooks');
-}
+}*/
 
 async function loginUser(_, { email, password }) {
   const user = await User.findOne({ email });
@@ -25,9 +25,17 @@ async function loginUser(_, { email, password }) {
 }
 
 async function createUser(_, { username, email, password }) {
-  const user = await User.create({ username, email, password });
-  return { token: signToken(user), user };
+  try {
+    const user = await User.create({ username, email, password });
+    return { token: signToken(user), user };
+  } catch (error) {
+    console.error("Error creating user:", error);
+    // Handle specific error types here, potentially returning different error messages
+    throw new Error('Signup failed: ' + error.message);
+  }
 }
+
+
 
 async function saveBookToUser(_, { bookData }, context) {
   if (!context.user) {
@@ -47,8 +55,15 @@ async function removeBookFromUser(_, { bookId }, context) {
 
 const resolvers = {
   Query: {
-    me: getMe,
+    me: async(parent, args, context) => {
+      if (context.user) {
+        const userInfo = await User.findOne({ _id: context.user._id }).select('-__v -password');
+        return userInfo;
+      }
+
+      throw new AuthenticationError('Not logged in');
   },
+},
 
   Mutation: {
     login: loginUser,
