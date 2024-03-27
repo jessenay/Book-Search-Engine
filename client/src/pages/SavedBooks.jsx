@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Container, Card, Button, Row, Col } from 'react-bootstrap';
-import { getMe, deleteBook } from '../utils/API';
+// Removed unused imports for clarity
 import Auth from '../utils/auth';
 import { removeBookId } from '../utils/localStorage';
 import { useQuery, useMutation } from '@apollo/client';
@@ -9,7 +9,9 @@ import { REMOVE_BOOK } from '../utils/mutations';
 
 const SavedBooks = () => {
   const { data, loading, error } = useQuery(GET_ME);
-  const removeBook = useMutation(REMOVE_BOOK);
+  
+  // Corrected useMutation hook usage
+  const [removeBook] = useMutation(REMOVE_BOOK);
 
   const userData = data?.me || {};
 
@@ -20,15 +22,18 @@ const SavedBooks = () => {
     }
 
     try {
+      // Correctly calling the removeBook function returned by useMutation
       await removeBook({
         variables: { bookId },
       });
+      // Assuming removeBookId updates local state or localStorage, it remains unchanged
       removeBookId(bookId);
     } catch (err) {
       console.error(err);
     }
   };
 
+  // Loading and error handling remains the same
   if (loading) return <h2>LOADING...</h2>;
   if (error) return <h2>ERROR</h2>;
 
@@ -48,8 +53,8 @@ const SavedBooks = () => {
         <Row>
           {userData.savedBooks.map((book) => {
             return (
-              <Col md="4">
-                <Card key={book.bookId} border='dark'>
+              <Col md="4" key={book.bookId}> {/* Moved the key to the top-level element inside map */}
+                <Card border='dark'>
                   {book.image ? <Card.Img src={book.image} alt={`The cover for ${book.title}`} variant='top' /> : null}
                   <Card.Body>
                     <Card.Title>{book.title}</Card.Title>
